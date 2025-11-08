@@ -1,5 +1,5 @@
 import pathlib
-from traces import Trace
+from champsimextract.core.traces import Trace   
 from typing import List
 from dataclasses import dataclass
 import re
