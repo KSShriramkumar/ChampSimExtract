@@ -32,5 +32,11 @@ LLC_RFO_MPKI = get_mpki_metric("LLC", "RFO")
 LLC_LOAD_MPKI = get_mpki_metric("LLC", "LOAD")  
 LLC_TOTAL_MPKI = get_mpki_metric("LLC", "TOTAL")
 
+LLC_SLICE_RFO_MISSES = lambda x: get_miss_metric(f"LLC_slice_{x}","RFO")
+LLC_SLICE_LOAD_MISSES = lambda x: get_miss_metric(f"LLC_slice_{x}","LOAD")
+LLC_SLICE_TOTAL_MISSES = lambda x: get_miss_metric(f"LLC_slice_{x}","TOTAL")
 
 
+LLC_SLICE_RFO_MPKI = lambda x: get_mpki_metric(f"LLC_slice_{x}","RFO")
+LLC_SLICE_LOAD_MPKI = lambda x: get_mpki_metric(f"LLC_slice_{x}","LOAD")
+LLC_SLICE_TOTAL_MPKI = lambda x: get_mpki_metric(f"LLC_slice_{x}","TOTAL")

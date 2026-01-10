@@ -3,6 +3,57 @@ from champsimextract.core.ChampsimLog import ChampsimLogCollection
 from champsimextract.core.metrics import Metric
 from champsimextract.plotting import plotter,tableGen
 from champsimextract.misc.MetricAggr import MetricAggregator 
+from pathlib import Path
+
+
+def merge_dicts(*dicts,_path=()):
+    """Merges all the given dictionaries into a single dictionary
+       Keys are assumed to be same, thus the result has a list of values for the keys rather 
+       than a single value 
+       Eg: merge({"a":{"b":1}},{"a":{"b":2}}) = {"a":{"b":[1,2]}}"""
+    for i, d in enumerate(dicts):
+        if not isinstance(d, dict):
+            raise TypeError(
+                f"Argument {i} at {'.'.join(_path) or '<root>'} "
+                f"is not a dict (got {type(d).__name__})"
+            )
+
+    
+    if not dicts:
+        return {}
+
+
+    result = {}
+
+    # All dicts must have the same keys
+    keys = set(dicts[0].keys())
+    for d in dicts[1:]:
+        if set(d.keys()) != keys:
+            missing = keys - set(d.keys())
+            extra = set(d.keys()) - keys
+            raise KeyError(
+                f"Key mismatch at {'.'.join(_path) or '<root>'} | "
+                f"missing={missing}, extra={extra}"
+            )
+
+    for key in keys:
+        values = [d[key] for d in dicts]
+
+        # All dicts → recurse
+        if all(isinstance(v, dict) for v in values):
+            result[key] = merge_dicts(*values, _path=_path + (key,))
+
+        # Mixed dict / non-dict → error
+        elif any(isinstance(v, dict) for v in values):
+            raise TypeError(
+                f"Type mismatch at {'.'.join(_path + (key,))}"
+            )
+
+        # Leaf → collect into list
+        else:
+            result[key] = list(values)
+
+    return result
 
 @dataclass
 class Configuration:
@@ -142,6 +193,27 @@ class Experiment:
             return table.generate_latex()
         return table.generate_table()
     
+    
+    def convert_to_csv(self,path_name:str,metric: Metric, aggregator: MetricAggregator):
+        data = self.get_data_dict(metric)
+        merged_metrics = merge_dicts(*[per_config_data for per_config_data  in data.values() ])
+        print(merged_metrics)
+        if Path(path_name).exists():
+            response = input("File already exists — would overwrite are you sure?(y/N) ")
+            if response == 'y' or response == 'Y':
+                print(f"Overwritting file at {path_name}")
+            else:
+                print("Abortting CSV write")
+                return
+        columns = ["trace"] + [config+"." + metric.name for config in data.keys()]
+        with open(path_name,'w') as f:
+            f.write(",".join(columns) + '\n')
+            for workload, sims_data in sorted(merged_metrics.items()):
+                for simpoint, values in sims_data.items():
+                    f.write(f"{workload + "." + simpoint}," 
+                            + ','.join([str(config_metric) for config_metric in values])
+                             +"\n" )
+
     def __str__(self) -> str:
         return f"Experiment(name={self.name}, num_configurations={len(self.configurations)})"
 

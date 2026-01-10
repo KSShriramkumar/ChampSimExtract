@@ -2,7 +2,10 @@ from champsimextract.core import *
 from champsimextract.misc.MetricAggr import MetricAggregator
 from champsimextract.common.metrics import LLC_LOAD_MPKI
 from champsimextract.common.aggregators import GEOMEAN
+from pathlib import Path
+import os
 
+BASE_DIR = Path(__file__).resolve().parent
 
 def flat_split_list(parts:list,sep):
     """Splits a list of strings by a separator and flattens the result into a single list."""
@@ -24,9 +27,9 @@ if __name__ == "__main__":
     exp = Experiment(
         name="Sample Experiment",
         configurations={
-            "8MB": "../data/LLC-Size/8192",
-            "16MB": "../data/LLC-Size/16384",
-            "32MB": "../data/LLC-Size/32768",
+            "8MB": os.path.join(BASE_DIR,"../data/LLC-Size/8192"),
+            "16MB": os.path.join(BASE_DIR,"../data/LLC-Size/16384"),
+            "32MB": os.path.join(BASE_DIR,"../data/LLC-Size/32768"),
         },
         get_workload_name_from_log_filename=lambda path: flat_split_multi_sep(path.name,sep=['.','-','_'])[2],
         get_simpoint_from_log_filename=lambda path: flat_split_multi_sep(path.name,sep=['.','-','_'])[3]
