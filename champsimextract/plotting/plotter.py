@@ -5,6 +5,7 @@ from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 import matplotlib.colors as mcolors
 import colorsys
 
+YTICK_COUNT=10 # MUST BE POSITIVE
 class Plotter:
     def __init__(
         self,
@@ -49,11 +50,15 @@ class Plotter:
         if self.title != '':
             raise ValueError("Title not implemented yet")
         # Extract configs and workloads
+        assert(delta_factor > 0, "Delta factor must be positive")
+        assert(delta_round !=0, "Delta round must be positive")
+
         self.configs = list(data.keys())
         self.workloads = list(next(iter(data.values())).keys())
         self.workloads_sorted = self._sorted_workloads()
         self.bar_width = min(min(0.3,0.8/ len(self.configs)),len(self.workloads)*(0.04))
 
+        assert(self.bar_width > 0, "Bar width must be positive")
         # Build numeric matrix
         self.values = np.array([
             [data[conf][wl] for wl in self.workloads_sorted]
@@ -120,7 +125,7 @@ class Plotter:
             maximum = np.max(self.values)
             minimum = np.min(self.values)
 
-        tick_count = 10
+        tick_count = YTICK_COUNT
         # Compute a rounded delta for ticks
         delta = int(((maximum - minimum) / tick_count) / self.delta_round) * self.delta_round * self.delta_factor
         ymin = max(0, int(minimum / self.round_to) * self.round_to)

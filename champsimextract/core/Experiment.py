@@ -4,7 +4,9 @@ from champsimextract.core.metrics import Metric
 from champsimextract.plotting import plotter,tableGen
 from champsimextract.misc.MetricAggr import MetricAggregator 
 from pathlib import Path
+import logging
 
+logger = logging.getLogger(__name__)
 
 def merge_dicts(*dicts,_path=()):
     """Merges all the given dictionaries into a single dictionary
@@ -18,7 +20,6 @@ def merge_dicts(*dicts,_path=()):
                 f"is not a dict (got {type(d).__name__})"
             )
 
-    
     if not dicts:
         return {}
 
@@ -39,7 +40,7 @@ def merge_dicts(*dicts,_path=()):
     for key in keys:
         values = [d[key] for d in dicts]
 
-        # All dicts → recurse
+        # All dicts -> recurse
         if all(isinstance(v, dict) for v in values):
             result[key] = merge_dicts(*values, _path=_path + (key,))
 
@@ -49,7 +50,7 @@ def merge_dicts(*dicts,_path=()):
                 f"Type mismatch at {'.'.join(_path + (key,))}"
             )
 
-        # Leaf → collect into list
+        # Leaf -> collect into list
         else:
             result[key] = list(values)
 
@@ -194,10 +195,9 @@ class Experiment:
         return table.generate_table()
     
     
-    def convert_to_csv(self,path_name:str,metric: Metric, aggregator: MetricAggregator):
+    def convert_to_csv(self,path_name:str,metric: Metric):
         data = self.get_data_dict(metric)
         merged_metrics = merge_dicts(*[per_config_data for per_config_data  in data.values() ])
-        print(merged_metrics)
         if Path(path_name).exists():
             response = input("File already exists — would overwrite are you sure?(y/N) ")
             if response == 'y' or response == 'Y':

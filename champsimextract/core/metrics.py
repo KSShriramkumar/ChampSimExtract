@@ -1,6 +1,9 @@
 # from __future__ import annotations
 import re
 from champsimextract.core.ChampsimLog import ChampsimLog
+import logging
+logger = logging.getLogger(__name__)
+
 class Metric:
     def __init__(self,name:str,regex_pattern:str) -> None:
         self.pattern = re.compile(regex_pattern)
@@ -41,8 +44,10 @@ class CustomMetric(Metric):
         self.process_func = process_func
     def get_val(self,log:ChampsimLog):
         raw_values = [metric.get_val(log) for metric in self.metrics]
-        return self.process_func(*raw_values)
-
+        try:
+            return self.process_func(*raw_values)
+        except Exception as e:
+            logger.warning(f"Provided process_func for {self.name} failed for arguments {raw_values} with error {e}")
     
 class BaselinedMetric(Metric):
     '''A metric that computes the ratio of a base metric between two configurations.
@@ -60,9 +65,14 @@ class BaselinedMetric(Metric):
             self.normalisation_func = normalisation_func
     def get_val(self,log:ChampsimLog):
         current_value = float(self.base_metric.get_val(log))
-        baseline_value = float(self.baseline_config_data\
-                               [self.baseline_config.get_workload_name_from_log_filename(log.path)]\
-                               [self.baseline_config.get_simpoint_from_log_filename(log.path)])
+        workload = self.baseline_config.get_workload_name_from_log_filename(log.path)
+        simpoint = self.baseline_config.get_simpoint_from_log_filename(log.path)
+        try:
+            baseline_value = float(self.baseline_config_data\
+                                [workload]\
+                                [simpoint])
+        except Exception as e:
+            logger.warning(f"Baseline metric cannot be found for workload: {workload}, simpoint: {simpoint} due to {e}")
         if baseline_value == 0:
-            raise ValueError(f"Baseline value for config {self.baseline_config.name} is zero, cannot compute baselined metric.")
+            raise ValueError(f"Baseline value for metric {self.name} for config {self.baseline_config.name} is zero, cannot compute baselined metric.")
         return self.normalisation_func(current_value,baseline_value)

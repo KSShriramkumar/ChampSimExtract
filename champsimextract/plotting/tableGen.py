@@ -7,6 +7,18 @@ class tableGen:
         self,
         data: Dict[str, Dict[str, float]]):
         self.data = data
+        assert(len(data),"Data must not be empty")
+        self.validate_data()
+    def validate_data(self):
+        sample_configuration = next(iter(self.data))
+        sample_workloads = set(self.data[sample_configuration].keys())
+
+        for configuration,value in self.data.items():
+            workloads = set(value.keys())
+            if workloads != sample_workloads:
+                raise ValueError(f"Data dictionary has invalid structure, \
+                                    keys of sample_configuration ({sample_configuration}) , {configuration} do not match")
+            
     def generate_table(self) -> str:
         """ Generate a plain text table from the given data dictionary.
             Table format: 

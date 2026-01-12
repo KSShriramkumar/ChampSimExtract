@@ -1,5 +1,7 @@
 from typing import Dict
 import copy
+import logging
+logger = logging.getLogger(__name__)
 
 def average(values: list) -> float:
     return sum(values) / len(values) if values else 0.0
@@ -15,7 +17,11 @@ class MetricAggregator:
         for conf, workload_dict in data.items():
             for workload,simpoint_dict in workload_dict.items():
                 simpoint_values = list(simpoint_dict.values())
-                avg_value = self.reducer(simpoint_values)
+                try:
+                    avg_value = self.reducer(simpoint_values)
+                except Exception as _:
+                    logger.warning(f"Error in aggregator {self.name}, reducing function failed")
+                    raise
                 if conf not in reduction:
                     reduction[conf] = {}
                 reduction[conf][workload] = avg_value
@@ -26,6 +32,9 @@ class MetricAggregator:
         reduction_with_avg = copy.deepcopy(reduction)
         for conf, workload_dict in reduction.items():
             conf_vals = list(workload_dict.values())
-            reduction_with_avg[conf][self.name] = self.reducer(conf_vals) if self.reducer else sum(conf_vals)/len(conf_vals)
+            if(len(conf_vals) == 0):
+                logger.warning(f"Cannot compute average for {self.conf} since value dictionary is empty")
+            else:
+                reduction_with_avg[conf][self.name] = self.reducer(conf_vals) if self.reducer else sum(conf_vals)/len(conf_vals)
         return reduction_with_avg
 

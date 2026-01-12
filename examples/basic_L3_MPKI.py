@@ -1,10 +1,11 @@
+from champsimextract.common.logging import setup_logging
+setup_logging(log_file="temp.log")
 from champsimextract.core import *
 from champsimextract.misc.MetricAggr import MetricAggregator
 from champsimextract.common.metrics import LLC_LOAD_MPKI
 from champsimextract.common.aggregators import GEOMEAN
 from pathlib import Path
 import os
-
 BASE_DIR = Path(__file__).resolve().parent
 
 def flat_split_list(parts:list,sep):
